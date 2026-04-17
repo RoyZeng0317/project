@@ -1,0 +1,3 @@
+Smart_NFU_School.MainActivity, Smart NFU School;crc64b05b6792476dcbc3.MainActivity
+Smart_NFU_School.MainActivity;crc64b05b6792476dcbc3.MainActivity
+smart_nfu_school.MainActivity;crc64b05b6792476dcbc3.MainActivity

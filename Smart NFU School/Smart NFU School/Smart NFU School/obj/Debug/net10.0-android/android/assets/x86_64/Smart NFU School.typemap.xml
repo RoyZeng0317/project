@@ -1,0 +1,8 @@
+<api type="debug" assembly-name="Smart NFU School" mvid="a349cfa0054649628d237a4dc8199488">
+  <java-to-managed>
+    <entry java-name="crc64b05b6792476dcbc3/MainActivity" managed-name="Smart_NFU_School.MainActivity, Smart NFU School" managed-type-token-id="33554435" />
+  </java-to-managed>
+  <managed-to-java>
+    <entry java-name="crc64b05b6792476dcbc3/MainActivity" managed-name="Smart_NFU_School.MainActivity, Smart NFU School" managed-type-token-id="33554435" />
+  </managed-to-java>
+</api>
