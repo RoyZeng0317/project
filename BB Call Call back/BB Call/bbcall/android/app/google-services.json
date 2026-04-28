@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "884575119093",
+    "project_id": "bb-call",
+    "storage_bucket": "bb-call.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884575119093:android:534ceca8ae920834d047bc",
+        "android_client_info": {
+          "package_name": "com.example.bbcall"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAesZ3250S-HQqwugPBU25Tv3JVbpT-LNI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
