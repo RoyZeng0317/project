@@ -50,7 +50,11 @@ def send_message(client, from_name: str, text: str, music: int = 0):
 
 # ─── 主程式 ───────────────────────────────────────────
 def main():
-    client = mqtt.Client(f"test-{int(time.time())}")
+    # client = mqtt.Client(f"test-{int(time.time())}", protocol = mqtt.MQTTv311)
+    client = mqtt.Client(
+        client_id = f"test-{int(time.time())}",
+        protocol = mqtt.MQTTv311
+    )
     client.on_connect = on_connect
     client.on_message = on_message
 

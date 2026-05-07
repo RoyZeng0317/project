@@ -20,7 +20,7 @@
 ESP32          OLED SSD1306
 ─────          ────────────
 GPIO 21  ─────  SDA
-GPIO 22  ─────  SCL
+GPIO 20  ─────  SCL
 3.3V     ─────  VCC
 GND      ─────  GND
 

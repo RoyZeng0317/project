@@ -1,9 +1,7 @@
 #pragma once
-#include <PubSubClient.h>
 #include <WiFi.h>
-#include "config.h"
+#include <PubSubClient.h>
 
-// ─── Callback 型別 ────────────────────────────────
 typedef void (*MsgCallback)(String topic, String payload);
 
 class MqttManager {
@@ -12,13 +10,23 @@ public:
   PubSubClient client;
   MsgCallback  userCallback = nullptr;
 
-  const char* _server;
-  int         _port;
-  const char* _user;
-  const char* _pass;
-  const char* _deviceId;
+  const char* _server   = nullptr;
+  int         _port     = 1883;
+  const char* _user     = nullptr;
+  const char* _pass     = nullptr;
+  const char* _deviceId = nullptr;
 
-  MqttManager() : client(wifiClient) {}
+  // ─── static 成員：儲存唯一實例指標 ─────────────
+  static MqttManager* instance;
+
+  MqttManager() : client(wifiClient) {
+    instance = this;
+  }
+
+  // ─── static callback：PubSubClient 要求一般函式指標 ──
+  static void staticCallback(char* topic, byte* payload, unsigned int len) {
+    if (instance) instance->_onMessage(topic, payload, len);
+  }
 
   void begin(const char* server, int port,
              const char* user, const char* pass,
@@ -30,10 +38,7 @@ public:
     _deviceId = deviceId;
 
     client.setServer(server, port);
-    client.setCallback([](char* topic, byte* payload, unsigned int len) {
-      // 轉發到實例
-      MqttMgr._onMessage(topic, payload, len);
-    });
+    client.setCallback(MqttManager::staticCallback);  // 用 class 名稱限定
     client.setBufferSize(512);
     _connect();
   }
@@ -52,12 +57,19 @@ public:
 
   bool publish(const char* topic, const char* payload) {
     if (!client.connected()) return false;
-    bool ok = client.publish(topic, payload, true);  // retained=true
-    Serial.printf("[MQTT] Publish %s → %s\n", topic, ok ? "OK" : "FAIL");
+    bool ok = client.publish(topic, payload, true);
+    Serial.printf("[MQTT] Publish %s -> %s\n", topic, ok ? "OK" : "FAIL");
     return ok;
   }
 
-  // ─── 私有 ──────────────────────────────────────
+  void _onMessage(char* topic, byte* payload, unsigned int len) {
+    String topicStr(topic);
+    String payloadStr;
+    payloadStr.reserve(len);
+    for (unsigned int i = 0; i < len; i++) payloadStr += (char)payload[i];
+    if (userCallback) userCallback(topicStr, payloadStr);
+  }
+
   void _connect() {
     String clientId = String("esp32-") + _deviceId + "-" + String(millis());
     uint8_t retries = 0;
@@ -66,54 +78,42 @@ public:
       Serial.printf("[MQTT] 連線至 %s:%d ...\n", _server, _port);
 
       bool ok;
-      if (strlen(_user) > 0) {
+      if (_user && strlen(_user) > 0) {
         ok = client.connect(clientId.c_str(), _user, _pass,
                             _willTopic().c_str(), 1, true, "{\"online\":false}");
       } else {
-        ok = client.connect(clientId.c_str(),
-                            nullptr, nullptr,
+        ok = client.connect(clientId.c_str(), nullptr, nullptr,
                             _willTopic().c_str(), 1, true, "{\"online\":false}");
       }
 
       if (ok) {
         Serial.println(F("[MQTT] 連線成功"));
         _subscribe();
-        // 發布上線狀態
         String tp = String("bbcall/") + _deviceId + "/status";
         client.publish(tp.c_str(), "{\"online\":true}", true);
         return;
       } else {
-        Serial.printf("[MQTT] 連線失敗，錯誤碼 %d，等待重試\n", client.state());
+        Serial.printf("[MQTT] 連線失敗，錯誤碼 %d\n", client.state());
         delay(3000 * (++retries));
       }
     }
   }
 
   void _subscribe() {
-    // 訂閱收件匣
     String inbox = String("bbcall/") + _deviceId + "/inbox";
     client.subscribe(inbox.c_str());
-
-    // 訂閱音樂控制
     String music = String("bbcall/") + _deviceId + "/music";
     client.subscribe(music.c_str());
-
     Serial.printf("[MQTT] 訂閱：%s\n", inbox.c_str());
   }
 
   String _willTopic() {
     return String("bbcall/") + _deviceId + "/status";
   }
-
-  void _onMessage(char* topic, byte* payload, unsigned int len) {
-    String topicStr(topic);
-    String payloadStr;
-    payloadStr.reserve(len);
-    for (unsigned int i = 0; i < len; i++) {
-      payloadStr += (char)payload[i];
-    }
-    if (userCallback) userCallback(topicStr, payloadStr);
-  }
 };
 
+// ─── static 成員的定義（必須在 class 外面寫一次）──
+MqttManager* MqttManager::instance = nullptr;
+
+// ─── 全域實例 ─────────────────────────────────────
 MqttManager MqttMgr;

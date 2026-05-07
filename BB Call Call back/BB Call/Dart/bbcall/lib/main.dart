@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+// WiFi setting
+import 'package:wifi_iot/wifi_iot.dart';
 
 Future<void> getMessages() async {
   final response = await http.get(Uri.parse("https://ip/api.php"));
@@ -79,3 +81,22 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+await WiFiForIoTPlugin.connect(
+"ESP32_WiFi_Setup",
+password: "12345678",
+security: NetworkSecurity.WPA,
+);
+
+import 'package:http/http.dart' as http;
+
+await http.post(
+Uri.parse("http:192.168.4.1/setup"),
+body: {
+"ssid": "";
+"password": "";
+},
+);
+class static
+
+// Message
