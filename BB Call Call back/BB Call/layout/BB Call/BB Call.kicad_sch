@@ -15403,6 +15403,52 @@
 		)
 	)
 	(sheet
+		(at 223.52 104.14)
+		(size 50.8 33.02)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "9f2f1b50-f5e7-4e37-ab58-a427fe726801")
+		(property "Sheetname" "Battery"
+			(at 223.52 103.4284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "Battery.kicad_sch"
+			(at 223.52 137.7446 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "BB Call"
+				(path "/e866ee95-ac75-4662-818c-95723bb4362d"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
 		(at 123.19 15.24)
 		(size 39.37 21.59)
 		(exclude_from_sim no)

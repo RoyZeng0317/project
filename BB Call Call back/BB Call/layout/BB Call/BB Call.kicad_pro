@@ -416,13 +416,17 @@
         "uuid": "e866ee95-ac75-4662-818c-95723bb4362d"
       }
     ],
-    "used_designators": "#PWR2-3",
+    "used_designators": "BT1,#PWR4-6,#PWR61-63,C21,C39-40,U1,U17,DS2,R3,SW4-6",
     "variants": []
   },
   "sheets": [
     [
       "e866ee95-ac75-4662-818c-95723bb4362d",
       "Root"
+    ],
+    [
+      "9f2f1b50-f5e7-4e37-ab58-a427fe726801",
+      "Battery"
     ],
     [
       "68773857-3726-4799-a7e9-fd6769dbf2b8",
