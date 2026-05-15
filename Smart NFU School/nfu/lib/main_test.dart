@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     tartget: LatLng(23.6978, 120.9605), // 以南投最為台灣本島的中心點
     zoom: 7,  // 縮放到 7 倍，顯示整個台灣
     );
-
+}
 Future<void> sendMessage(String msg) async{
     final response = await http.post(
 
