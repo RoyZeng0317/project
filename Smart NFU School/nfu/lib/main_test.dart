@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
   Position? _currentPosition;
   // 地圖初始位置，設定在虎尾鎮
   static final CameraPosition _initialCameraPosition = CameraPosition(
-    tartget: LatLng(23.6978, 120.9605), // 以南投最為台灣本島的中心點
+    target: LatLng(23.6978, 120.9605), // 以南投最為台灣本島的中心點
     zoom: 7,  // 縮放到 7 倍，顯示整個台灣
     );
 }
@@ -60,13 +60,12 @@ Future<void> sendMessage(String msg) async{
     print(response.body);
 }
 
-Furture<void> getMessages() async{
-
+Future<void> getMessages() async{
     final response = await http.get(
-        Uri.pharse("https://mydomain.com/api.php")
-    )
+        Uri.parse("https://mydomain.com/api.php"),
+    );
 
-    var  data = jsonDecode(response.body);
+    var data = jsonDecode(response.body);
 
     print(data);
 }

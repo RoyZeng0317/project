@@ -114,39 +114,16 @@ class _MapPageState extends State<MapPage> {
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
-  
-Future<List<ParkingLocation>> fetchParkingLocations() async {
-  final response = await http.get(Uri.parse('http://localhost:3000/parking-locations'));
 
-  if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body);
-    return jsonResponse.map((location) => ParkingLocation.fromJson(location)).toList();
-  } else {
-    throw Exception('無法加載停車場位置');
-  }
-}
+  Future<List<ParkingLocation>> fetchParkingLocations() async {
+    final response = await http.get(Uri.parse('http://localhost:3000/parking-locations'));
 
-class ParkingLocation {
-  final int id;
-  final String name;
-  final double latitude;
-  final double longitude;
-
-  ParkingLocation({required this.id, required this.name, required this.latitude, required this.longitude});
-
-  factory ParkingLocation.fromJson(Map<String, dynamic> json) {
-    return ParkingLocation(
-      id: json['id'],
-      name: json['name'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
-    );
-  }
-}
-
-
-    final data = jsonDecode(response.body) as List<dynamic>;
-    return data.map((item) => ParkingLocation.fromMap(item)).toList();
+    if (response.statusCode == 200) {
+      List jsonResponse = json.decode(response.body);
+      return jsonResponse.map((location) => ParkingLocation.fromJson(location)).toList();
+    } else {
+      throw Exception('無法加載停車場位置');
+    }
   }
 
   Future<void> _drawRoute() async {
@@ -471,4 +448,44 @@ class ParkingLot {
     availableSlots: m['availableSlots'],
     feePerHour: m['feePerHour'],
   );
+}
+class ParkingLocation {
+  final int id;
+  final String name;
+  final double latitude;
+  final double longitude;
+
+  ParkingLocation({required this.id, required this.name, required this.latitude, required this.longitude});
+
+  factory ParkingLocation.fromJson(Map<String, dynamic> json) {
+    return ParkingLocation(
+      id: json['id'],
+      name: json['name'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+    );
+  }
+}
+
+// 連線到 MySQL資料庫
+Future<void> sendMessage(String msg) async{
+    final response = await http.post(
+
+        Uri.parse("https://mydomain.com/send.php"),
+
+        body:{
+            "message": msg
+        },
+    );
+    print(response.body);
+}
+
+Future<void> getMessages() async{
+    final response = await http.get(
+        Uri.parse("https://mydomain.com/api.php"),
+    );
+
+    var data = jsonDecode(response.body);
+
+    print(data);
 }

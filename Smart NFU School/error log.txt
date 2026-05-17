@@ -1,0 +1,22 @@
+Future<void> sendMessage(String msg) async{
+    final response = await http.post(
+
+        Uri.parse("https://mydomain.com/send.php"),
+
+        body:{
+            "message": msg
+        },
+    );
+    print(response.body);
+}
+
+Furture<void> getMessages() async{
+
+    final response = await http.get(
+        Uri.pharse("https://mydomain.com/api.php")
+    )
+
+    var  data = jsonDecode(response.body);
+
+    print(data);
+}

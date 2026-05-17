@@ -1,0 +1,32 @@
+PS C:\Users\Roy\Documents\GitHub\project\Smart NFU School\nfu> flutter run
+Launching lib\main.dart on SM S9280 in debug mode...
+lib/main.dart:129:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class ParkingLocation {
+^^^^^
+lib/main.dart:118:13: Error: Type 'ParkingLocation' not found.
+Future<List<ParkingLocation>> fetchParkingLocations() async {
+            ^^^^^^^^^^^^^^^
+lib/main.dart:123:43: Error: The getter 'ParkingLocation' isn't defined for the type '_MapPageState'.
+ - '_MapPageState' is from 'package:nfu/main.dart' ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'ParkingLocation'.
+    return jsonResponse.map((location) => ParkingLocation.fromJson(location)).toList();
+                                          ^^^^^^^^^^^^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command 'C:\Users\Roy\flutter\bin\flutter.bat'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 16s
+Running Gradle task 'assembleDebug'...                             16.6s
+Error: Gradle task assembleDebug failed with exit code 1
