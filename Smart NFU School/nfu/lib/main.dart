@@ -1,17 +1,25 @@
-import 'dart:async'; // 同步資料的庫
+import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math; // 數學計算的庫
-import 'package:flutter/material.dart';  // Flutter 的 UI 庫
-import 'package:flutter/services.dart';  // 與平台通訊的庫
-import 'package:geolocator/geolocator.dart';  // 獲取地理位置的庫
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Google 地圖的 Flutter 插件
-import 'package:http/http.dart' as http; // 發送 HTTP 請求的庫
-// 執行程式的開始點
-void main() {
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
+// import 'seed_firestore.dart';
+const String googleMapsApiKey = 'AIzaSyDiHrp7c5hkRWtwXSoWYJ_Vtr6pgSR-z34';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // await seedParkingLots();
   runApp(const MyApp());
 }
-// google 的地圖 API 金鑰
-const String googleMapsApiKey = 'AIzaSyDiHrp7c5hkRWtwXSoWYJ_Vtr6pgSR-z34';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -33,38 +41,31 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  static const MethodChannel _navigationChannel = MethodChannel(
-    'nfu/navigation',
-  );
+  static const MethodChannel _navigationChannel = MethodChannel('nfu/navigation');
 
   static const CameraPosition _initialCameraPosition = CameraPosition(
     target: LatLng(23.6978, 120.9605),
-    zoom: 7,
-  );
-  // 目標停車場資訊，這裡使用了 ATC 第三教學大樓電子工程系旁停車場的資訊作為範例
-  static const ParkingLot _targetParkingLot = ParkingLot(
-    id: 1,
-    name: 'ATC 第三教學大樓電子工程系旁停車場',
-    address: '632雲林縣虎尾鎮文化路64號',
-    lat: 23.7030,
-    lng: 120.4294,
-    totalSlots: 120,
-    availableSlots: 35,
-    feePerHour: 20,
+    zoom: 8,
   );
 
   GoogleMapController? _mapController;
   Position? _currentPosition;
   Set<Polyline> _polylines = {};
   bool _isLoadingRoute = false;
+  bool _isLoadingLots = true;
 
-  LatLng get _destination =>
-      LatLng(_targetParkingLot.lat, _targetParkingLot.lng);
+  List<ParkingLot> _parkingLots = [];
+  ParkingLot? _selectedParkingLot;
+
+  LatLng? get _destination {
+    if (_selectedParkingLot == null) return null;
+    return LatLng(_selectedParkingLot!.lat, _selectedParkingLot!.lng);
+  }
 
   @override
   void initState() {
     super.initState();
-    unawaited(_loadCurrentLocation());
+    unawaited(_initMap());
   }
 
   @override
@@ -73,11 +74,35 @@ class _MapPageState extends State<MapPage> {
     super.dispose();
   }
 
+  Future<void> _initMap() async {
+    await Future.wait([
+      _loadCurrentLocation(),
+      _loadParkingLots(),
+    ]);
+  }
+
+  Future<void> _loadParkingLots() async {
+    try {
+      final lots = await fetchParkingLotsFromFirestore();
+      if (!mounted) return;
+      setState(() {
+        _parkingLots = lots;
+        _isLoadingLots = false;
+        if (lots.isNotEmpty) {
+          _selectedParkingLot = lots.first;
+        }
+      });
+    } on Object catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingLots = false);
+      _showMessage('無法載入停車場資料: $e');
+    }
+  }
+
   Future<void> _loadCurrentLocation() async {
     try {
       final position = await _determinePosition();
       if (!mounted) return;
-
       setState(() => _currentPosition = position);
       await _mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(
@@ -93,47 +118,34 @@ class _MapPageState extends State<MapPage> {
 
   Future<Position> _determinePosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw 'Please enable location services first.';
-    }
-
+    if (!serviceEnabled) throw '請先開啟定位服務';
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-
-    if (permission == LocationPermission.denied) {
-      throw 'Location permission is required to plan a route.';
-    }
-
+    if (permission == LocationPermission.denied) throw '需要定位權限才能規劃路線';
     if (permission == LocationPermission.deniedForever) {
-      throw 'Location permission is permanently denied. Enable it in system settings.';
+      throw '定位權限已被永久拒絕，請到系統設定中開啟';
     }
-
     return Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 
-  Future<List<ParkingLocation>> fetchParkingLocations() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/parking-locations'));
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((location) => ParkingLocation.fromJson(location)).toList();
-    } else {
-      throw Exception('無法加載停車場位置');
-    }
+  void _onMarkerTapped(ParkingLot lot) {
+    setState(() => _selectedParkingLot = lot);
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(LatLng(lot.lat, lot.lng), 16),
+    );
   }
 
   Future<void> _drawRoute() async {
+    if (_destination == null) return;
     setState(() => _isLoadingRoute = true);
-
     try {
       final origin = _currentPosition ?? await _determinePosition();
       final originLatLng = LatLng(origin.latitude, origin.longitude);
-      final points = await _fetchDirections(originLatLng, _destination);
-
+      final points = await _fetchDirections(originLatLng, _destination!);
       if (!mounted) return;
       setState(() {
         _currentPosition = origin;
@@ -146,22 +158,16 @@ class _MapPageState extends State<MapPage> {
           ),
         };
       });
-
-      await _fitMapToRoute([originLatLng, _destination, ...points]);
+      await _fitMapToRoute([originLatLng, _destination!, ...points]);
     } on Object catch (error) {
       if (!mounted) return;
       _showMessage(error.toString());
     } finally {
-      if (mounted) {
-        setState(() => _isLoadingRoute = false);
-      }
+      if (mounted) setState(() => _isLoadingRoute = false);
     }
   }
 
-  Future<List<LatLng>> _fetchDirections(
-    LatLng origin,
-    LatLng destination,
-  ) async {
+  Future<List<LatLng>> _fetchDirections(LatLng origin, LatLng destination) async {
     final uri = Uri.https('maps.googleapis.com', '/maps/api/directions/json', {
       'origin': '${origin.latitude},${origin.longitude}',
       'destination': '${destination.latitude},${destination.longitude}',
@@ -169,60 +175,48 @@ class _MapPageState extends State<MapPage> {
       'language': 'zh-TW',
       'key': googleMapsApiKey,
     });
-
     final response = await http.get(uri);
     if (response.statusCode != 200) {
-      throw 'Route request failed: HTTP ${response.statusCode}';
+      throw '路線請求失敗: HTTP ${response.statusCode}';
     }
-
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final status = data['status'] as String?;
     if (status != 'OK') {
-      final message = data['error_message'] as String?;
-      throw message ?? 'Google Directions API returned: $status';
+      throw data['error_message'] as String? ?? 'Google Directions API 回傳: $status';
     }
-
     final routes = data['routes'] as List<dynamic>;
-    if (routes.isEmpty) {
-      throw 'No available route was found.';
-    }
-
+    if (routes.isEmpty) throw '找不到可用路線';
     final route = routes.first as Map<String, dynamic>;
     final polyline = route['overview_polyline'] as Map<String, dynamic>;
     final encoded = polyline['points'] as String?;
-    if (encoded == null || encoded.isEmpty) {
-      throw 'Route response does not contain a polyline.';
-    }
-
+    if (encoded == null || encoded.isEmpty) throw '路線回應缺少 polyline';
     return _decodePolyline(encoded);
   }
 
   Future<void> _openGoogleMapsNavigation() async {
+    if (_destination == null) return;
     try {
       await _navigationChannel.invokeMethod<void>('openNavigation', {
-        'latitude': _destination.latitude,
-        'longitude': _destination.longitude,
+        'latitude': _destination!.latitude,
+        'longitude': _destination!.longitude,
       });
     } on PlatformException catch (error) {
-      _showMessage(error.message ?? 'Unable to open Google Maps navigation.');
+      _showMessage(error.message ?? '無法開啟 Google Maps 導航');
     }
   }
 
   Future<void> _fitMapToRoute(List<LatLng> points) async {
     if (points.isEmpty) return;
-
     var minLat = points.first.latitude;
     var maxLat = points.first.latitude;
     var minLng = points.first.longitude;
     var maxLng = points.first.longitude;
-
     for (final point in points.skip(1)) {
       minLat = math.min(minLat, point.latitude);
       maxLat = math.max(maxLat, point.latitude);
       minLng = math.min(minLng, point.longitude);
       maxLng = math.max(maxLng, point.longitude);
     }
-
     await _mapController?.animateCamera(
       CameraUpdate.newLatLngBounds(
         LatLngBounds(
@@ -239,19 +233,15 @@ class _MapPageState extends State<MapPage> {
     var index = 0;
     var lat = 0;
     var lng = 0;
-
     while (index < encoded.length) {
       final latResult = _decodePolylineValue(encoded, index);
       index = latResult.nextIndex;
       lat += latResult.value;
-
       final lngResult = _decodePolylineValue(encoded, index);
       index = lngResult.nextIndex;
       lng += lngResult.value;
-
       points.add(LatLng(lat / 1E5, lng / 1E5));
     }
-
     return points;
   }
 
@@ -260,38 +250,43 @@ class _MapPageState extends State<MapPage> {
     var result = 0;
     var shift = 0;
     int byte;
-
     do {
       byte = encoded.codeUnitAt(index++) - 63;
       result |= (byte & 0x1f) << shift;
       shift += 5;
     } while (byte >= 0x20);
-
     final value = (result & 1) != 0 ? ~(result >> 1) : result >> 1;
     return _DecodedPolylineValue(value, index);
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Set<Marker> _buildMarkers() {
+    return _parkingLots.map((lot) {
+      final isSelected = _selectedParkingLot?.id == lot.id;
+      return Marker(
+        markerId: MarkerId(lot.id.toString()),
+        position: LatLng(lot.lat, lot.lng),
+        icon: isSelected
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
+            : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(
+          title: lot.name,
+          snippet: '可用: ${lot.availableSlots ?? "?"} / 總共: ${lot.totalSlots ?? "?"}',
+        ),
+        onTap: () => _onMarkerTapped(lot),
+      );
+    }).toSet();
   }
 
   @override
   Widget build(BuildContext context) {
-    final markers = {
-      Marker(
-        markerId: const MarkerId('parking_lot'),
-        position: _destination,
-        infoWindow: InfoWindow(
-          title: _targetParkingLot.name,
-          snippet: _targetParkingLot.address,
-        ),
-      ),
-    };
+    final markers = _buildMarkers();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('School Parking lot')),
+      appBar: AppBar(title: const Text('虎科大智慧校園 - 停車場')),
       body: Stack(
         children: [
           GoogleMap(
@@ -304,31 +299,29 @@ class _MapPageState extends State<MapPage> {
               _mapController = controller;
               final currentPosition = _currentPosition;
               if (currentPosition != null) {
-                unawaited(
-                  controller.animateCamera(
-                    CameraUpdate.newLatLngZoom(
-                      LatLng(
-                        currentPosition.latitude,
-                        currentPosition.longitude,
-                      ),
-                      15,
-                    ),
+                unawaited(controller.animateCamera(
+                  CameraUpdate.newLatLngZoom(
+                    LatLng(currentPosition.latitude, currentPosition.longitude),
+                    15,
                   ),
-                );
+                ));
               }
             },
           ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: _ParkingLotPanel(
-              parkingLot: _targetParkingLot,
-              isLoadingRoute: _isLoadingRoute,
-              onDrawRoute: _drawRoute,
-              onNavigate: _openGoogleMapsNavigation,
+          if (_isLoadingLots)
+            const Center(child: CircularProgressIndicator()),
+          if (_selectedParkingLot != null && !_isLoadingLots)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 24,
+              child: _ParkingLotPanel(
+                parkingLot: _selectedParkingLot!,
+                isLoadingRoute: _isLoadingRoute,
+                onDrawRoute: _drawRoute,
+                onNavigate: _openGoogleMapsNavigation,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -337,7 +330,6 @@ class _MapPageState extends State<MapPage> {
 
 class _DecodedPolylineValue {
   const _DecodedPolylineValue(this.value, this.nextIndex);
-
   final int value;
   final int nextIndex;
 }
@@ -366,10 +358,7 @@ class _ParkingLotPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              parkingLot.name,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(parkingLot.name, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(parkingLot.address),
             const SizedBox(height: 8),
@@ -378,11 +367,11 @@ class _ParkingLotPanel extends StatelessWidget {
               runSpacing: 4,
               children: [
                 if (parkingLot.availableSlots != null)
-                  Text('Available: ${parkingLot.availableSlots}'),
+                  Text('可用: ${parkingLot.availableSlots}'),
                 if (parkingLot.totalSlots != null)
-                  Text('Total: ${parkingLot.totalSlots}'),
+                  Text('總共: ${parkingLot.totalSlots}'),
                 if (parkingLot.feePerHour != null)
-                  Text('Hourly: \$${parkingLot.feePerHour}'),
+                  Text('每小時: \$${parkingLot.feePerHour}'),
               ],
             ),
             const SizedBox(height: 12),
@@ -397,7 +386,7 @@ class _ParkingLotPanel extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.alt_route),
-                    label: const Text('Show route'),
+                    label: const Text('顯示路線'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -405,7 +394,7 @@ class _ParkingLotPanel extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onNavigate,
                     icon: const Icon(Icons.navigation),
-                    label: const Text('Navigate'),
+                    label: const Text('導航'),
                   ),
                 ),
               ],
@@ -438,54 +427,53 @@ class ParkingLot {
     this.feePerHour,
   });
 
-  factory ParkingLot.fromMap(Map<String, dynamic> m) => ParkingLot(
-    id: m['id'],
-    name: m['name'],
-    address: m['address'],
-    lat: m['lat'],
-    lng: m['lng'],
-    totalSlots: m['totalSlots'],
-    availableSlots: m['availableSlots'],
-    feePerHour: m['feePerHour'],
-  );
-}
-class ParkingLocation {
-  final int id;
-  final String name;
-  final double latitude;
-  final double longitude;
-
-  ParkingLocation({required this.id, required this.name, required this.latitude, required this.longitude});
-
-  factory ParkingLocation.fromJson(Map<String, dynamic> json) {
-    return ParkingLocation(
-      id: json['id'],
-      name: json['name'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+  factory ParkingLot.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>;
+    return ParkingLot(
+      id: d['id'] ?? doc.id.hashCode,
+      name: d['name'] ?? '',
+      address: d['address'] ?? '',
+      lat: (d['lat'] as num?)?.toDouble() ?? 0,
+      lng: (d['lng'] as num?)?.toDouble() ?? 0,
+      totalSlots: d['totalSlots'] as int?,
+      availableSlots: d['availableSlots'] as int?,
+      feePerHour: d['feePerHour'] as int?,
     );
   }
+
+  Map<String, dynamic> toFirestore() => {
+    'name': name,
+    'address': address,
+    'lat': lat,
+    'lng': lng,
+    'totalSlots': totalSlots,
+    'availableSlots': availableSlots,
+    'feePerHour': feePerHour,
+  };
 }
 
-// 連線到 MySQL資料庫
-Future<void> sendMessage(String msg) async{
-    final response = await http.post(
-
-        Uri.parse("https://mydomain.com/send.php"),
-
-        body:{
-            "message": msg
-        },
-    );
-    print(response.body);
+Future<List<ParkingLot>> fetchParkingLotsFromFirestore() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('parking_lots')
+      .get();
+  return snapshot.docs.map((doc) => ParkingLot.fromFirestore(doc)).toList();
 }
 
-Future<void> getMessages() async{
-    final response = await http.get(
-        Uri.parse("https://mydomain.com/api.php"),
-    );
+Future<void> sendMessageToFirestore(String msg) async {
+  await FirebaseFirestore.instance.collection('messages').add({
+    'message': msg,
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+}
 
-    var data = jsonDecode(response.body);
-
-    print(data);
+Future<List<Map<String, dynamic>>> getMessagesFromFirestore() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('messages')
+      .orderBy('createdAt', descending: true)
+      .get();
+  return snapshot.docs.map((doc) {
+    final d = doc.data();
+    d['id'] = doc.id;
+    return d;
+  }).toList();
 }

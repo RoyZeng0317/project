@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1063589342716",
+    "project_id": "smart-nfu",
+    "storage_bucket": "smart-nfu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1063589342716:android:2f04def114a22304cd5679",
+        "android_client_info": {
+          "package_name": "com.example.nfu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCMWb-CBp0i-CGGJEhAqBBdxUfILBbQQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
