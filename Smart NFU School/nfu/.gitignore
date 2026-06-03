@@ -39,6 +39,9 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+# Backblaze B2 credentials
+b2/config.json
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile

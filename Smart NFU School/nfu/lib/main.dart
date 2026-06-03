@@ -9,8 +9,12 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+import 'b2_service.dart';
 // import 'seed_firestore.dart';
 const String googleMapsApiKey = 'AIzaSyDiHrp7c5hkRWtwXSoWYJ_Vtr6pgSR-z34';
+
+const String b2BaseUrl = 'https://f002.backblazeb2.com/file/YOUR_BUCKET_NAME';
+final b2Service = B2Service(baseUrl: b2BaseUrl);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,7 +87,13 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _loadParkingLots() async {
     try {
-      final lots = await fetchParkingLotsFromFirestore();
+      List<ParkingLot> lots;
+      try {
+        final b2Lots = await b2Service.fetchParkingLots();
+        lots = b2Lots.map((b) => ParkingLot.fromB2Json(b)).toList();
+      } on Object catch (_) {
+        lots = await fetchParkingLotsFromFirestore();
+      }
       if (!mounted) return;
       setState(() {
         _parkingLots = lots;
@@ -426,6 +436,19 @@ class ParkingLot {
     this.availableSlots,
     this.feePerHour,
   });
+
+  factory ParkingLot.fromB2Json(ParkingLotB2 b2) {
+    return ParkingLot(
+      id: b2.id,
+      name: b2.name,
+      address: b2.address,
+      lat: b2.lat,
+      lng: b2.lng,
+      totalSlots: b2.totalSlots,
+      availableSlots: b2.availableSlots,
+      feePerHour: b2.feePerHour,
+    );
+  }
 
   factory ParkingLot.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;

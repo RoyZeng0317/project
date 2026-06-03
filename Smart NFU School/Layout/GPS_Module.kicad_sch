@@ -1,0 +1,12 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "f0b860dc-9a9d-472f-adea-9f3ed6972229")
+	(paper "A4")
+	(title_block
+		(title "GPS_Module")
+		(date "2026-06-02")
+	)
+	(lib_symbols)
+)

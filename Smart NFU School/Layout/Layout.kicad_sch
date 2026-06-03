@@ -1,0 +1,110 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "ab205cb6-844b-4892-987b-c7da81ad941d")
+	(paper "A4")
+	(title_block
+		(title "Smart NFU School Layout")
+		(date "2026-06-02")
+	)
+	(lib_symbols)
+	(sheet
+		(at 73.66 27.94)
+		(size 55.88 22.86)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "d95b97bf-da16-492b-a69f-ef53bdbaa345")
+		(property "Sheetname" "GPS_Module"
+			(at 73.66 27.2284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "GPS_Module.kicad_sch"
+			(at 73.66 51.3846 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Layout"
+				(path "/ab205cb6-844b-4892-987b-c7da81ad941d"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 195.58 27.94)
+		(size 60.96 20.32)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "ed5a3519-8d42-4e39-a656-a5ff4b2054bc")
+		(property "Sheetname" "IRS-180"
+			(at 195.58 27.2284 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "IRS-180.kicad_sch"
+			(at 195.58 48.8446 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "Layout"
+				(path "/ab205cb6-844b-4892-987b-c7da81ad941d"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
