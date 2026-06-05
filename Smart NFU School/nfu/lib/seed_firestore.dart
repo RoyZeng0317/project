@@ -15,7 +15,6 @@ Future<void> seedParkingLots() async {
       'lng': 120.43210,
       'totalSlots': 120,
       'availableSlots': 35,
-      'feePerHour': 30,
     },
     {
       'id': 2,
@@ -25,7 +24,6 @@ Future<void> seedParkingLots() async {
       'lng': 120.43120,
       'totalSlots': 80,
       'availableSlots': 12,
-      'feePerHour': 25,
     },
     {
       'id': 3,
@@ -35,7 +33,6 @@ Future<void> seedParkingLots() async {
       'lng': 120.43300,
       'totalSlots': 60,
       'availableSlots': 20,
-      'feePerHour': 20,
     },
     {
       'id': 4,
@@ -45,7 +42,6 @@ Future<void> seedParkingLots() async {
       'lng': 120.43050,
       'totalSlots': 100,
       'availableSlots': 55,
-      'feePerHour': 35,
     },
     {
       'id': 5,
@@ -55,7 +51,6 @@ Future<void> seedParkingLots() async {
       'lng': 120.43430,
       'totalSlots': 150,
       'availableSlots': 70,
-      'feePerHour': 40,
     },
   ];
 
