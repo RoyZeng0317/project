@@ -1,9 +1,7 @@
-
 const int IR1=2;
 const int IR2=3;
 int carCount =0;
 int state=0;
-
 void setup() {
   pinMode(IR1,input);
 pinMode(IR2,input);
