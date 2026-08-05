@@ -9,6 +9,37 @@ from sklearn.ensemble import RandomForestClassifier
 API_KEY = ""
 # F-C0032-005 = 一般天氣預報-1週縣市天氣預報
 CWA_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-005"
+# 氣象署開放資料 API 網址 (一般縣市天氣預報 36小時)
+CWA_API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
+
+
+def fetch_weather(location_name="雲林縣", api_key=""):
+    """使用 requests.get 向氣象署 API 請求天氣資料"""
+    key = api_key or API_KEY
+    if not key:
+        return f"{location_name} 天氣：多雲 | 氣溫：22~28°C | 降雨機率：20% (請設定 CWA API_KEY)"
+    
+    params = {
+        "Authorization": key,
+        "locationName": location_name
+    }
+    try:
+        res = requests.get(CWA_API_URL, params=params, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+        
+        # 取出該縣市資料
+        location = data["records"]["location"][0]
+        elements = {e["elementName"]: e["time"][0]["parameter"]["parameterName"] for e in location["weatherElement"]}
+        
+        wx = elements.get("Wx", "未知")       # 天氣現象
+        pop = elements.get("PoP", "0")       # 降雨機率 %
+        min_t = elements.get("MinT", "--")   # 最低溫
+        max_t = elements.get("MaxT", "--")   # 最高溫
+        
+        return f"{location_name} 天氣：{wx} | 氣溫：{min_t}~{max_t}°C | 降雨機率：{pop}%"
+    except Exception as e:
+        return f"無法取得天氣資料: {e}"
 
 
 def get_location():

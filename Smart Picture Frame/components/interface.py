@@ -1,8 +1,19 @@
-# 匯入 weather.py
-import weather
-# 匯入 time.py
-from . import time as clock  # 用相對匯入，避免跟 Python 內建 time 模組撞名
-from . import photo
+import os
+import sys
+
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    from . import clock
+    from . import weather
+    from . import photo
+except ImportError:
+    from components import clock
+    from components import weather
+    from components import photo
+
 
 # 保留 pi 與 ESP32 的面板驅動
 驅動 = ""
