@@ -1,0 +1,6 @@
+requests
+geopy
+scikit-learn
+Pillow
+# gps 套件不是用 pip 裝，樹莓派上要另外裝 gpsd + python3-gps：
+#   sudo apt install gpsd gpsd-clients python3-gps
