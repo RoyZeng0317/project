@@ -1,0 +1,11 @@
+requests
+geopy
+scikit-learn
+Pillow
+pillow-heif        # photo.py 讀取 .heic/.heif(iPhone 相片常見格式)用
+pillow-avif-plugin  # photo.py 讀取 .avif 用
+pyserial  # bt_frame_sender.py / usb_frame_sender.py 用來透過序列埠(藍牙或 USB)傳資料給 Pico
+mpremote  # pico_flash_photos.py 用來透過 USB 把圖片燒進 Pico 內建 flash
+bleak     # ble_frame_sender.py 用來透過 BLE 傳資料給 ESP32-S3-CAM
+# gps 套件不是用 pip 裝，樹莓派上要另外裝 gpsd + python3-gps：
+#   sudo apt install gpsd gpsd-clients python3-gps

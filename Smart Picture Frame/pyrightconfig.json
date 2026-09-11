@@ -1,0 +1,11 @@
+{
+  "stubPath": "Raspberry pi pico/typings",
+  "exclude": ["Raspberry pi pico/typings", "**/.venv", "**/__pycache__"],
+  "executionEnvironments": [
+    {
+      "root": "Raspberry pi pico",
+      "extraPaths": ["Raspberry pi pico/typings"],
+      "reportMissingModuleSource": "none"
+    }
+  ]
+}
