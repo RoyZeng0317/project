@@ -8,7 +8,7 @@ weather_URL = "https://www.cwa.gov.tw/V8/C/"
 # 氣象署開放資料 API 網址 (一般縣市天氣預報 36小時)
 CWA_API_URL = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
 # 請至 https://opendata.cwa.gov.tw/ 申請免費 Authorization API Key 填入
-CWA_API_KEY = ""
+CWA_API_KEY = "CWA-56B76501-07DE-45C6-A038-444D8952AE8E"
 
 def fetch_weather(location_name="雲林縣", api_key=""):
     """使用 requests.get 向氣象署 API 請求天氣資料"""

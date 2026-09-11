@@ -1,6 +1,8 @@
 # 整合全套組件的主介面 (GUI)
+import asyncio
 import os
 import sys
+import threading
 import tkinter as tk
 
 # 確保根目錄在 sys.path 中
@@ -61,8 +63,67 @@ def main():
     upload_btn = tk.Button(btn_frame, text="📷 上傳圖片", command=photo.upload_photo, font=("Arial", 12), bg="#333333", fg="white")
     upload_btn.pack(side="bottom", pady=5)
 
+    select_btn = tk.Button(btn_frame, text="🖼 選擇照片", command=lambda: photo.select_photos_dialog(window), font=("Arial", 12), bg="#333333", fg="white")
+    select_btn.pack(side="bottom", pady=5)
+
+    capture_btn = tk.Button(btn_frame, text="📸 拍照", command=_trigger_capture, font=("Arial", 12), bg="#333333", fg="white")
+    capture_btn.pack(side="bottom", pady=5)
+
+    record_btn = tk.Button(btn_frame, text="🎤 錄音", command=_trigger_record, font=("Arial", 12), bg="#333333", fg="white")
+    record_btn.pack(side="bottom", pady=5)
+
+    # 5. 推送到相框：把這裡輪播/選好的照片實際送去 Mega2560 螢幕顯示(重用 mega_frame_sender.py
+    # 的背景迴圈)，按一下開始、再按一下停止
+    # 2026-09-09：改推給 Mega2560(USB序列)，不再推給 ESP32-S3-CAM(BLE)——BLE 那條路一直有
+    # 掉包/紅色雜訊問題，換成有線 USB 序列傳輸比較穩定；ble_frame_sender.py 保留在檔案裡，
+    # 之後 ESP32 那邊穩定了要換回來，只要改下面這行 import 就好
+    push_thread: threading.Thread | None = None
+    push_stop: threading.Event | None = None
+
+    def _toggle_push():
+        nonlocal push_thread, push_stop
+        if push_thread and push_thread.is_alive() and push_stop:
+            push_stop.set()
+            push_btn.config(text="停止中...", state="disabled")
+            return
+
+        from mega_frame_sender import main as mega_main
+        push_stop = threading.Event()
+
+        def worker():
+            try:
+                mega_main(push_stop)
+            except Exception as e:
+                print(f"推送失敗: {e}")
+            window.after(0, lambda: push_btn.config(text="📡 推送到相框", state="normal"))
+
+        push_thread = threading.Thread(target=worker, daemon=True)
+        push_thread.start()
+        push_btn.config(text="⏹ 停止推送")
+
+    push_btn = tk.Button(btn_frame, text="📡 推送到相框", command=_toggle_push, font=("Arial", 12), bg="#333333", fg="white")
+    push_btn.pack(side="bottom", pady=5)
+
     # 進入主迴圈
     window.mainloop()
+
+
+def _run_ble(coro_func):
+    # 觸發 ESP32-S3-CAM 的 BLE 指令共用邏輯；BLE 連線是 async，開一條背景 thread 跑自己的
+    # event loop，避免卡住 tkinter 的 mainloop
+    threading.Thread(target=lambda: asyncio.run(coro_func()), daemon=True).start()
+
+
+def _trigger_capture():
+    from ble_frame_sender import trigger_capture
+    _run_ble(trigger_capture)
+
+
+def _trigger_record():
+    # 錄音結果不會回到這裡，是 ESP32 錄完後透過 USB 序列傳給 usb_frame_sender.py 存檔
+    # (見 usb_frame_sender.py 的 check_recording)，這顆按鈕只負責觸發
+    from ble_frame_sender import trigger_record
+    _run_ble(trigger_record)
 
 
 if __name__ == "__main__":

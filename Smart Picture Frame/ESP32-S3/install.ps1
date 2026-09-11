@@ -36,3 +36,11 @@ Write-Host ""
 Write-Host "Arduino IDE 開好後，請到 File > Preferences > Additional Boards Manager URLs 貼上以下網址，"
 Write-Host "再到 Tools > Board > Boards Manager 搜尋 esp32 安裝，才找得到 ESP32S3 Dev Module 這個板子："
 Write-Host "  https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"
+
+# 4. ESP32-S3-CAM/SmartFrame 韌體額外需要 LovyanGFX 函式庫(esp_camera.h 已經內建在 esp32 開發板套件裡，不用另外裝)
+#    同樣是 Arduino IDE 的 GUI 設定，用印出來的方式提醒你手動裝
+Write-Host ""
+Write-Host "編譯 ESP32-S3-CAM/SmartFrame 韌體前，還要到 Tools > Manage Libraries 搜尋並安裝 LovyanGFX(作者 lovyan03)："
+Write-Host "  https://github.com/lovyan03/LovyanGFX"
+Write-Host "腳位/驅動IC設定已經寫在 SmartFrame/lgfx_setup.h 裡，不用改 LovyanGFX 函式庫本身的設定檔"
+Write-Host "板子選好 ESP32S3 Dev Module 後，記得到 Tools > PSRAM 選 OPI PSRAM，鏡頭功能才有記憶體可用"
